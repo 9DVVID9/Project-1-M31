@@ -1,11 +1,9 @@
 
 # Traffic Collection Starter (BeautifulSoup + CSV, no cron)
 
-This starter is designed for your course constraints:
 - **CSV instead of a database** (all logs go to `data/logs/*.csv`).
-- **BeautifulSoup for web scraping** (no Selenium).
+- **BeautifulSoup for web scraping**
 - **20-minute collection windows**, with **images every N seconds**.
-- **No cron needed**: a pure-Python scheduler runs 2–3 windows per day for 2–3 weeks.
 
 > ⚠️ **Legal check**: Only automate downloads if the site/owner allows it (check the page Terms/robots.txt or ask permission). If automation isn't permitted, you can still run `grab_window_bs4.py` manually for demonstration, or rely on official Open Data APIs and use the camera only as an embedded view in your final app.
 
@@ -18,7 +16,7 @@ Python 3.10+ recommended.
 pip install requests beautifulsoup4
 ```
 
-(Optional) For later modeling:
+For later modeling:
 ```bash
 pip install pandas scikit-learn ultralytics opencv-python
 ```
@@ -79,4 +77,3 @@ This writes `data/logs/duplicates.csv` and a summary. By default it **keeps** th
 - Train a baseline regressor to predict the count **+20 minutes** ahead.
 - Report MAE/RMSE and show error by hour/day.
 
-Good luck!
