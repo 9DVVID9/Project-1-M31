@@ -1,0 +1,7 @@
+ultralytics==8.3.0
+pandas
+numpy
+matplotlib
+requests
+beautifulsoup4
+opencv-python-headless
