@@ -4,6 +4,7 @@ __pycache__/
 data/raw/images/
 data/yolo_out/
 data/logs/
+data/datasets/
 .DS_Store
 Thumbs.db
 .vscode/
