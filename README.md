@@ -10,7 +10,7 @@
 ---
 
 ## 1) Install
-Python 3.10+ recommended.
+Python 3.11 recommended.
 
 ```bash
 pip install requests beautifulsoup4
@@ -20,6 +20,22 @@ For later modeling:
 ```bash
 pip install pandas scikit-learn ultralytics opencv-python
 ```
+
+Prereqs: note the project expects Python 3.11 (point to winget install --id Python.Python.3.11 -e or python.org).
+
+Create/Activate env: run from the outer folder:
+
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r Project-1-M31-main\requirements.txt scikit-learn joblib
+
+Project folder reminder: sources live in Project-1-M31-main; run commands there.
+Data pipeline order:
+python src\clean_data.py → produces TRAFFIC_CLEANED.csv
+python src\train_linear_regression.py / train_knn.py / train_decision_tree.py → creates the model .pkls.
+Optional YOLO workflow: python src\yolo_count.py, python src\build_dataset.py, etc., noting outputs.
+Troubleshooting: reactivate the env in new shells; reinstall if pip errors mention Python 3.14.
 
 ---
 
@@ -77,3 +93,25 @@ This writes `data/logs/duplicates.csv` and a summary. By default it **keeps** th
 - Train a baseline regressor to predict the count **+20 minutes** ahead.
 - Report MAE/RMSE and show error by hour/day.
 
+---
+
+## 7) Train the models
+Once `src/clean_data.py` has produced `TRAFFIC_CLEANED.csv`, fit the tabular models:
+
+```powershell
+python src/train_linear_regression.py
+python src/train_knn.py
+python src/train_decision_tree.py
+python src/train_random_forest.py
+```
+
+Each script saves a `.pkl` in the project root. `train_random_forest.py` now reports the holdout accuracy while training and writes `model_random_forest.pkl`.
+
+## 8) Launch the desktop GUI
+Use the lightweight Tkinter GUI to try different models and feature inputs without touching the code:
+
+```powershell
+python src/gui.py
+```
+
+The GUI loads whichever `.pkl` files are available, displays their quick evaluation metrics (accuracy for classifiers, MAE for the regression model), and lets you enter `hour`/`day` pairs to preview predictions.

@@ -9,3 +9,14 @@ data/datasets/
 Thumbs.db
 .vscode/
 .idea/
+
+# Artifacts and weights
+*.pkl
+*.pt
+*.zip
+
+# Local CSV outputs
+TRAFFIC_*.csv
+
+# Generated plots
+docs/outputs/
