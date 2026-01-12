@@ -54,7 +54,7 @@ class ModelManager:
                 continue
             try:
                 model = joblib.load(path)
-            except Exception as exc:  # noqa: BLE001 - show friendly info in GUI
+            except Exception as exc:  
                 self.messages.append(f"Failed to load {path.name}: {exc}")
                 continue
             self.models[display_name] = {
@@ -73,11 +73,11 @@ class ModelManager:
 
         try:
             df = pd.read_csv(DATA_FILE)
-        except Exception as exc:  # noqa: BLE001 - surface read issues to the user
+        except Exception as exc:  
             self.messages.append(f"Could not read TRAFFIC_CLEANED.csv: {exc}")
             return
 
-        # Ensure dataset has required columns before computing metrics.
+        # Ensure dataset has required columns before computing metrics
         for column in BASE_FEATURE_COLUMNS + [CLASS_LABEL, REG_LABEL]:
             if column not in df.columns:
                 self.messages.append(
@@ -99,7 +99,7 @@ class ModelManager:
                 random_state=42,
                 stratify=y_class,
             )
-        except ValueError as exc:  # noqa: BLE001 - not enough samples for stratify
+        except ValueError as exc:  
             self.messages.append(f"Not enough data for classification metric: {exc}")
             return
 
@@ -294,7 +294,7 @@ class TrafficPredictorGUI:
             messagebox.showerror("Invalid Day", "Select a valid day of the week.")
             return
 
-        # --- QUESTA PARTE DEFINISCE 'features' (NON RIMUOVERLA) ---
+
         day_idx = DAY_TO_INDEX[day_name]
         weekend_flag = 1 if day_idx >= 5 else 0
         features = pd.DataFrame(
@@ -314,8 +314,7 @@ class TrafficPredictorGUI:
             prediction = model.predict(features_aligned)[0]
             confidence = self._class_probability(model, features_aligned, prediction)
             
-            # TRUCCO: Proviamo a recuperare il numero dal Linear Regression
-            # per mostrare sia il conteggio che il livello
+            
             try:
                 reg_info = self.manager.models.get("Linear Regression")
                 if reg_info:
@@ -345,7 +344,7 @@ class TrafficPredictorGUI:
                 return None
             index = list(classes).index(label)
             return probabilities[index]
-        except Exception:  # noqa: BLE001 - fallback to no-confidence display
+        except Exception: 
             return None
 
 
