@@ -5,9 +5,9 @@ def clean_data():
     
     # 1. Load Raw Data
     try:
-        df = pd.read_csv('TRAFFIC_PER_IMAGE.csv')
+        df = pd.read_csv('data/yolo_out/minute_counts.csv')
     except FileNotFoundError:
-        print("Error: TRAFFIC_PER_IMAGE.csv not found.")
+        print("Error: minute_counts.csv not found.")
         return
 
     # 2. Fix Time (Convert UTC to Barcelona Time)
