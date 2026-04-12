@@ -43,6 +43,8 @@ Rules:
 - If asked for advice (best/worst time), give a concrete time range.
 - TENSE RULE: Only use "currently" or present tense when the context explicitly says "RIGHT NOW".
   For all other queries, use future/conditional tense: "is expected to be", "will likely be", "you can expect".
+- SCOPE RULE: You only know about TRAFFIC conditions, not weather forecasts. If asked about weather,
+  clarify you can only provide traffic information, and mention the weather context only as it affects driving.
 """
 
 # ---------------------------------------------------------------------------

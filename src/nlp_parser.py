@@ -261,6 +261,15 @@ def _extract_day(text: str) -> Optional[int]:
     if re.search(r"\bweekday\b", text, re.IGNORECASE):
         return 0  # Monday as representative
 
+    # "in N days" / "in a couple of days" / "in a week" / "next week"
+    m_days = re.search(r"\bin\s+(\d+)\s+days?\b", text, re.IGNORECASE)
+    if m_days:
+        return (today + int(m_days.group(1))) % 7
+    if re.search(r"\bin\s+a\s+couple\s+(?:of\s+)?days?\b", text, re.IGNORECASE):
+        return (today + 2) % 7
+    if re.search(r"\b(?:in\s+a\s+week|next\s+week)\b", text, re.IGNORECASE):
+        return (today + 7) % 7
+
     # 3. Relative Spanish keywords
     # "mañana" = tomorrow when it appears standalone (not as part of "por la mañana" / "esta mañana")
     # Check each occurrence individually so "manana por la manana" → tomorrow (first) + morning (second)
@@ -276,6 +285,13 @@ def _extract_day(text: str) -> Optional[int]:
         return 5  # Saturday
     if re.search(r"\bd[ií]a\s+laborable\b", text, re.IGNORECASE):
         return 0  # Monday
+
+    # "en N días" (Spanish "in N days")
+    m_dias = re.search(r"\ben\s+(\d+)\s+d[ií]as?\b", text, re.IGNORECASE)
+    if m_dias:
+        return (today + int(m_dias.group(1))) % 7
+    if re.search(r"\b(?:en\s+una\s+semana|la\s+semana\s+(?:que\s+viene|pr[oó]xima))\b", text, re.IGNORECASE):
+        return (today + 7) % 7
 
     # 4. "now" / "ahora" → today
     if _CURRENT_RE.search(text):
