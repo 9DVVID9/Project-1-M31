@@ -293,32 +293,3 @@ def _fetch_weather_for_hour(target_hour: int) -> tuple[dict, str]:
         pass
 
     return {}, "fallback"
-
-
-# ---------------------------------------------------------------------------
-# Quick smoke-test
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    mc = ModelConnector()
-    print("Dataset lag defaults loaded:", len(mc._lag_defaults), "slots")
-    print("Dataset weather defaults loaded:", len(mc._weather_defaults), "hours")
-    print()
-
-    test_cases = [
-        (8,  0, "Monday morning rush"),
-        (14, 2, "Wednesday afternoon"),
-        (22, 5, "Saturday night"),
-        (3,  6, "Sunday early morning"),
-    ]
-
-    for hour, dow, label in test_cases:
-        result = mc.predict(hour=hour, day_of_week=dow)
-        w = result["weather"]
-        print(
-            f"{label:30s} -> {result['traffic_level']:6s} "
-            f"(conf {result['confidence']*100:.1f}%) "
-            f"| {result['day_name']} {hour:02d}:00 "
-            f"| {w['temperature']}°C  {w['precipitation']}mm  {w['windspeed']}km/h wind "
-            f"[weather: {result['weather_source']}]"
-        )

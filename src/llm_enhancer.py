@@ -213,31 +213,3 @@ def _fallback_response(prediction: dict, hour: int) -> str:
         ),
     }
     return messages.get(level, f"Traffic on {day} at {hour:02d}:00 is predicted to be {level}.")
-
-
-# ---------------------------------------------------------------------------
-# Smoke test
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    key = os.getenv("GEMINI_API_KEY")
-    if not key:
-        print("Set GEMINI_API_KEY to run the smoke test.")
-        raise SystemExit(1)
-
-    mc  = ModelConnector()
-    llm = GeminiEnhancer(api_key=key)
-
-    queries = [
-        "What's traffic like at 8am on Monday?",
-        "Is it busy right now?",
-        "When is the best time to drive on Friday?",
-        "Como es el trafico el sabado por la tarde?",
-        "Hay trafico ahora mismo en Arago?",
-    ]
-
-    for q in queries:
-        print(f"\nQ: {q}")
-        result = llm.respond(q, mc)
-        print(f"   [{result['intent'].upper()} | {result['day_name']} {result['hour']:02d}:00 | {result['traffic_level']}]")
-        print(f"   {result['text']}")
