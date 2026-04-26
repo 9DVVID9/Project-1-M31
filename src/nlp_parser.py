@@ -19,6 +19,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
+try:
+    from zoneinfo import ZoneInfo
+    _LOCAL_TZ = ZoneInfo("Europe/Madrid")
+except Exception:
+    _LOCAL_TZ = None  # falls back to system local time
+
 
 # ---------------------------------------------------------------------------
 # Output dataclass
@@ -44,22 +50,25 @@ class ParsedQuery:
 # ---------------------------------------------------------------------------
 
 _DAY_MAP: dict[str, int] = {
-    # English
+    # English (full names + safe abbreviations)
     "monday": 0, "mon": 0,
     "tuesday": 1, "tue": 1, "tues": 1,
     "wednesday": 2, "wed": 2,
     "thursday": 3, "thu": 3, "thur": 3, "thurs": 3,
     "friday": 4, "fri": 4,
     "saturday": 5, "sat": 5,
-    "sunday": 6, "sun": 6,
-    # Spanish (accented and unaccented variants)
-    "lunes": 0, "lun": 0,
-    "martes": 1, "mar": 1,
-    "miercoles": 2, "miércoles": 2, "mie": 2, "mié": 2,
+    "sunday": 6,
+    # Spanish (full names + accented variants).
+    # Ambiguous 3-letter abbreviations dropped: "lun", "mar", "mie", "mié",
+    # "sab", "sáb", "dom", "sun" — they cause false matches in unrelated text
+    # ("the sun is out", "in mar..." etc).
+    "lunes": 0,
+    "martes": 1,
+    "miercoles": 2, "miércoles": 2,
     "jueves": 3, "jue": 3,
     "viernes": 4, "vie": 4,
-    "sabado": 5, "sábado": 5, "sab": 5, "sáb": 5,
-    "domingo": 6, "dom": 6,
+    "sabado": 5, "sábado": 5,
+    "domingo": 6,
 }
 
 # ---------------------------------------------------------------------------
@@ -218,9 +227,9 @@ def _extract_hour(text: str) -> Optional[int]:
         if re.search(pattern, text, re.IGNORECASE):
             return hour
 
-    # 6. "now" / "ahora" → current local hour
+    # 6. "now" / "ahora" → current Madrid-local hour
     if _CURRENT_RE.search(text):
-        return datetime.now().hour
+        return datetime.now(_LOCAL_TZ).hour
 
     return None
 
@@ -242,7 +251,7 @@ def _apply_ampm(raw: int, suffix: str) -> Optional[int]:
 
 def _extract_day(text: str) -> Optional[int]:
     """Return 0–6 or None. Priority: explicit name → relative word."""
-    today = datetime.now().weekday()
+    today = datetime.now(_LOCAL_TZ).weekday()
 
     # 1. Explicit day names (English + Spanish)
     for token, idx in _DAY_MAP.items():

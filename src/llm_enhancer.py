@@ -27,6 +27,12 @@ from google.genai import types
 from src.connector import ModelConnector
 from src.nlp_parser import ParsedQuery, parse_query
 
+try:
+    from zoneinfo import ZoneInfo
+    _LOCAL_TZ = ZoneInfo("Europe/Madrid")
+except Exception:
+    _LOCAL_TZ = None
+
 # ---------------------------------------------------------------------------
 # System prompt
 # ---------------------------------------------------------------------------
@@ -59,15 +65,19 @@ class GeminiEnhancer:
     def __init__(self, api_key: Optional[str] = None) -> None:
         key = api_key or os.getenv("GEMINI_API_KEY")
         if not key:
-            raise ValueError(
-                "Gemini API key not found. "
-                "Set the GEMINI_API_KEY environment variable or pass api_key=."
-            )
+            self._client = None
+            self._config = None
+            return
         self._client = genai.Client(api_key=key)
         self._config = types.GenerateContentConfig(
             system_instruction=_SYSTEM_PROMPT,
             temperature=0.4,
         )
+
+    @property
+    def is_fallback_mode(self) -> bool:
+        """True when no API key was provided — responses use template fallback."""
+        return self._client is None
 
     # ------------------------------------------------------------------
     # High-level pipeline entry point
@@ -93,7 +103,7 @@ class GeminiEnhancer:
         """
         parsed = parse_query(user_text)
 
-        now  = datetime.now()
+        now  = datetime.now(_LOCAL_TZ)
         hour = parsed.hour        if parsed.hour        is not None else now.hour
         dow  = parsed.day_of_week if parsed.day_of_week is not None else now.weekday()
 
@@ -127,8 +137,10 @@ class GeminiEnhancer:
         Falls back to a template-based response if the API call fails.
         """
         resolved_hour = hour if hour is not None else (
-            parsed.hour if parsed.hour is not None else datetime.now().hour
+            parsed.hour if parsed.hour is not None else datetime.now(_LOCAL_TZ).hour
         )
+        if self._client is None:
+            return _fallback_response(prediction, resolved_hour)
         prompt = _build_prompt(prediction, parsed, original_query, resolved_hour)
         try:
             response = self._client.models.generate_content(
@@ -136,7 +148,10 @@ class GeminiEnhancer:
                 contents=prompt,
                 config=self._config,
             )
-            return response.text.strip()
+            text = (response.text or "").strip()
+            if not text:
+                return _fallback_response(prediction, resolved_hour)
+            return text
         except Exception as e:
             logging.warning("Gemini API call failed: %s", e)
             return _fallback_response(prediction, resolved_hour)

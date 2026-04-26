@@ -31,7 +31,12 @@ st.set_page_config(
 
 @st.cache_resource(show_spinner="Loading traffic models...")
 def load_pipeline() -> tuple[ModelConnector, GeminiEnhancer]:
-    api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY", "")
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if not api_key:
+        try:
+            api_key = st.secrets.get("GEMINI_API_KEY", "")
+        except Exception:
+            api_key = ""
     mc  = ModelConnector()
     llm = GeminiEnhancer(api_key=api_key)
     return mc, llm
@@ -46,6 +51,17 @@ with st.sidebar:
         "Real-time traffic forecasts for **Arago Street, Barcelona** "
         "powered by a Random Forest model (~75% accuracy) and Gemini AI."
     )
+
+    try:
+        _, _llm_check = load_pipeline()
+        if _llm_check.is_fallback_mode:
+            st.warning(
+                "Gemini API key not set — responses use template fallback. "
+                "Set `GEMINI_API_KEY` for natural language replies."
+            )
+    except Exception:
+        pass
+
     st.divider()
 
     st.subheader("Try asking")
@@ -131,8 +147,5 @@ if prompt := st.chat_input("Ask about traffic on Arago Street..."):
                     "meta": result,
                 })
 
-            except ValueError as e:
-                # Missing API key
-                st.error(str(e))
             except Exception as e:
                 st.error(f"Something went wrong. Please try again. ({e})")

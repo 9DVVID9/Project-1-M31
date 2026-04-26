@@ -20,7 +20,8 @@ Usage:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -28,6 +29,12 @@ import joblib
 import numpy as np
 import pandas as pd
 import requests
+
+try:
+    from zoneinfo import ZoneInfo
+    _LOCAL_TZ = ZoneInfo("Europe/Madrid")
+except Exception:
+    _LOCAL_TZ = None  # falls back to system local time
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -109,6 +116,10 @@ class ModelConnector:
             weather         – resolved weather dict
             weather_source  – "api" | "dataset_median" | "fallback"
         """
+        if not isinstance(hour, int) or isinstance(hour, bool):
+            raise ValueError(f"hour must be an integer 0–23, got {hour!r}")
+        if not isinstance(day_of_week, int) or isinstance(day_of_week, bool):
+            raise ValueError(f"day_of_week must be an integer 0–6, got {day_of_week!r}")
         if not (0 <= hour <= 23):
             raise ValueError(f"hour must be 0–23, got {hour}")
         if not (0 <= day_of_week <= 6):
@@ -134,7 +145,7 @@ class ModelConnector:
             "lag_3": lag3,
         }])[FEATURE_COLUMNS]
 
-        predicted_class = self.model.predict(features)[0]
+        predicted_class = str(self.model.predict(features)[0])
 
         probabilities: dict[str, float] = {}
         if hasattr(self.model, "predict_proba"):
@@ -232,8 +243,8 @@ class ModelConnector:
                     "precipitation": float(group["precipitation"].median()),
                     "windspeed": float(group["windspeed"].median()),
                 }
-        except Exception:
-            pass  # defaults remain empty; _resolve_* will use hardcoded fallbacks
+        except Exception as e:
+            logging.warning("Could not load dataset defaults from %s: %s", DATA_PATH, e)
 
 
 # ---------------------------------------------------------------------------
@@ -263,17 +274,24 @@ def _fetch_weather_for_hour(target_hour: int) -> tuple[dict, str]:
         precips = data["hourly"]["precipitation"]
         winds = data["hourly"]["windspeed_10m"]
 
-        now_hour = datetime.now(timezone.utc).hour
+        # API returns Madrid local time (timezone=Europe/Madrid in URL).
+        # Pick the first slot at target_hour that is now or in the future.
+        now_naive = datetime.now(_LOCAL_TZ).replace(tzinfo=None)
         best_index = None
-
-        # Prefer the soonest upcoming slot that matches target_hour
         for i, t in enumerate(times):
-            slot_hour = int(t[11:13])
-            if slot_hour == target_hour:
-                if best_index is None:
-                    best_index = i
-                # prefer a slot whose wall-clock hour is >= now
-                elif int(t[8:10]) >= datetime.now().day:
+            try:
+                slot_dt = datetime.fromisoformat(t)
+            except ValueError:
+                continue
+            if slot_dt.hour == target_hour and slot_dt >= now_naive:
+                best_index = i
+                break
+
+        # If no upcoming slot found (e.g. target_hour earlier today, only
+        # tomorrow's match remains), fall back to the first matching slot.
+        if best_index is None:
+            for i, t in enumerate(times):
+                if int(t[11:13]) == target_hour:
                     best_index = i
                     break
 
