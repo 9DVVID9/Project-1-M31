@@ -6,9 +6,15 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
 
-DATA_PATH = Path("TRAFFIC_CLEANED.csv")
+DATA_PATH = Path("TRAFFIC_ENHANCED.csv")
 MODEL_PATH = Path("model_random_forest.pkl")
-FEATURE_COLUMNS = ["hour", "day_of_week", "is_weekend", "hour_sin", "hour_cos"]
+# Added weather + lag features for higher accuracy in Phase 2
+FEATURE_COLUMNS = [
+    "hour", "day_of_week", "is_weekend", 
+    "hour_sin", "hour_cos", 
+    "temperature", "precipitation", "windspeed",
+    "lag_1", "lag_2", "lag_3"
+]
 LABEL_COLUMN = "traffic_level"
 
 
