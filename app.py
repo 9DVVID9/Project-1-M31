@@ -103,14 +103,15 @@ for msg in st.session_state.messages:
         st.write(msg["content"])
         if msg["role"] == "assistant" and "meta" in msg:
             meta = msg["meta"]
-            level = meta.get("traffic_level", "")
-            icon  = _LEVEL_ICON.get(level, "")
-            temp  = meta.get("weather", {}).get("temperature", "?")
-            st.caption(
-                f"{icon} **{level}** traffic · "
-                f"{meta.get('day_name', '')} {meta.get('hour', 0):02d}:00 · "
-                f"{temp}°C"
-            )
+            level = meta.get("traffic_level")
+            if level:
+                icon = _LEVEL_ICON.get(level, "")
+                temp = meta.get("weather", {}).get("temperature", "?")
+                st.caption(
+                    f"{icon} **{level}** traffic · "
+                    f"{meta.get('day_name', '')} {meta.get('hour', 0):02d}:00 · "
+                    f"{temp}°C"
+                )
 
 # ---------------------------------------------------------------------------
 # Chat input
@@ -132,14 +133,15 @@ if prompt := st.chat_input("Ask about traffic on Arago Street..."):
 
                 st.write(result["text"])
 
-                level = result.get("traffic_level", "")
-                icon  = _LEVEL_ICON.get(level, "")
-                temp  = result.get("weather", {}).get("temperature", "?")
-                st.caption(
-                    f"{icon} **{level}** traffic · "
-                    f"{result.get('day_name', '')} {result.get('hour', 0):02d}:00 · "
-                    f"{temp}°C"
-                )
+                level = result.get("traffic_level")
+                if level:
+                    icon = _LEVEL_ICON.get(level, "")
+                    temp = result.get("weather", {}).get("temperature", "?")
+                    st.caption(
+                        f"{icon} **{level}** traffic · "
+                        f"{result.get('day_name', '')} {result.get('hour', 0):02d}:00 · "
+                        f"{temp}°C"
+                    )
 
                 st.session_state.messages.append({
                     "role": "assistant",

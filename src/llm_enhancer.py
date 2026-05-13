@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from datetime import datetime
 from typing import Optional
 
@@ -52,6 +53,76 @@ Rules:
 - SCOPE RULE: You only know about TRAFFIC conditions, not weather forecasts. If asked about weather,
   clarify you can only provide traffic information, and mention the weather context only as it affects driving.
 """
+
+# ---------------------------------------------------------------------------
+# Scope filter (out-of-topic detection)
+# ---------------------------------------------------------------------------
+
+# Traffic + weather vocabulary. Lowercased; matched with word boundaries
+# against the raw user text. Weather is in scope because the model uses
+# weather features and users naturally ask about it.
+_ON_TOPIC_KEYWORDS = {
+    # English — traffic
+    "traffic", "congestion", "congested", "jam", "jammed", "busy",
+    "rush", "road", "roads", "street", "drive", "driving",
+    "commute", "commuting", "car", "cars", "vehicle", "vehicles",
+    # English — weather
+    "weather", "rain", "raining", "rainy", "snow", "snowing", "wind",
+    "windy", "temperature", "hot", "cold", "sunny", "cloudy", "forecast",
+    # Spanish — traffic
+    "tráfico", "trafico", "atasco", "atascos", "congestión", "congestion",
+    "carretera", "calle", "coche", "coches", "vehículo", "vehiculo",
+    "conducir", "circulación", "circulacion",
+    # Spanish — weather
+    "tiempo", "clima", "lluvia", "lloviendo", "llover", "nieve", "viento",
+    "temperatura", "calor", "frío", "frio", "soleado", "nublado",
+    "pronóstico", "pronostico",
+}
+
+# Cheap Spanish-vs-English signal used only for the rejection message.
+_SPANISH_HINTS_CHARS = {"á", "é", "í", "ó", "ú", "ñ", "¿", "¡"}
+_SPANISH_HINTS_WORDS = {
+    "qué", "que", "cómo", "como", "cuándo", "cuando", "cuál", "cual",
+    "dónde", "donde", "quién", "quien", "está", "esta", "hoy", "ayer",
+    "mañana", "manana", "lunes", "martes", "miércoles", "miercoles",
+    "jueves", "viernes", "sábado", "sabado", "domingo", "hola",
+    "porque", "gracias",
+}
+
+_OUT_OF_SCOPE_EN = (
+    "I can only answer questions about traffic on Aragó Street, Barcelona. "
+    "My purpose is to forecast traffic conditions, not general questions. "
+    "Try something like: \"How's traffic Monday at 12 pm?\""
+)
+_OUT_OF_SCOPE_ES = (
+    "Solo puedo responder preguntas sobre el tráfico en la Avenida Aragó, Barcelona. "
+    "Mi propósito es predecir condiciones de tráfico, no responder preguntas generales. "
+    "Prueba con algo como: \"¿Cómo está el tráfico el lunes a las 12?\""
+)
+
+
+def _detect_language(text: str) -> str:
+    """Return 'es' if the text shows Spanish hints, else 'en'."""
+    lowered = text.lower()
+    for ch in _SPANISH_HINTS_CHARS:
+        if ch in lowered:
+            return "es"
+    for word in _SPANISH_HINTS_WORDS:
+        if re.search(rf"\b{re.escape(word)}\b", lowered):
+            return "es"
+    return "en"
+
+
+def _is_on_topic(parsed: ParsedQuery, raw_text: str) -> bool:
+    """Off-topic when the parser found no time/day AND no traffic/weather word appears."""
+    if parsed.hour is not None or parsed.day_of_week is not None:
+        return True
+    lowered = raw_text.lower()
+    for kw in _ON_TOPIC_KEYWORDS:
+        if re.search(rf"\b{re.escape(kw)}\b", lowered):
+            return True
+    return False
+
 
 # ---------------------------------------------------------------------------
 # Main class
@@ -102,6 +173,20 @@ class GeminiEnhancer:
             is_ambiguous – whether hour or day was defaulted
         """
         parsed = parse_query(user_text)
+
+        # Reject off-topic queries before touching the model or the API.
+        if not _is_on_topic(parsed, user_text):
+            lang = _detect_language(user_text)
+            return {
+                "text": _OUT_OF_SCOPE_ES if lang == "es" else _OUT_OF_SCOPE_EN,
+                "traffic_level": None,
+                "confidence": None,
+                "hour": None,
+                "day_name": None,
+                "weather": {},
+                "intent": "out_of_scope",
+                "is_ambiguous": False,
+            }
 
         now  = datetime.now(_LOCAL_TZ)
         hour = parsed.hour        if parsed.hour        is not None else now.hour
