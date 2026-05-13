@@ -69,8 +69,10 @@ with st.sidebar:
         "Is it busy on Monday at 8am?",
         "How is traffic right now?",
         "Best time to drive on Friday?",
-        "Hay trafico el sabado por la tarde?",
         "When should I avoid Arago Street?",
+        "Hay trafico el sabado por la tarde?",
+        "¿Cómo está el tráfico ahora?",
+        "¿Cuál es la mejor hora para conducir el viernes?",
     ]
     for s in suggestions:
         st.caption(f"• {s}")
