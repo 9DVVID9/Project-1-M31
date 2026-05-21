@@ -1,11 +1,7 @@
-ultralytics==8.3.0
-pandas
-numpy
-matplotlib
-requests
-beautifulsoup4
-opencv-python-headless
+streamlit
 google-genai
 scikit-learn
 joblib
-streamlit
+pandas
+numpy
+requests

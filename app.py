@@ -1,6 +1,6 @@
 """
-Conversational Traffic Assistant — Phase 2 Chatbot UI
-Arago Street, Barcelona
+Conversational Traffic Assistant — Chatbot UI
+Aragó Street, Barcelona
 
 Run with:
     streamlit run app.py
@@ -19,7 +19,7 @@ from src.llm_enhancer import GeminiEnhancer
 # ---------------------------------------------------------------------------
 
 st.set_page_config(
-    page_title="Arago Traffic Assistant",
+    page_title="Aragó Traffic Assistant",
     page_icon="🚦",
     layout="centered",
     initial_sidebar_state="expanded",
@@ -48,8 +48,8 @@ def load_pipeline() -> tuple[ModelConnector, GeminiEnhancer]:
 with st.sidebar:
     st.title("🚦 About")
     st.write(
-        "Real-time traffic forecasts for **Arago Street, Barcelona** "
-        "powered by a Random Forest model (~75% accuracy) and Gemini AI."
+        "Real-time traffic forecasts for **Aragó Street, Barcelona** "
+        "powered by a Random Forest model (~72% holdout accuracy) and Gemini AI."
     )
 
     try:
@@ -69,7 +69,7 @@ with st.sidebar:
         "Is it busy on Monday at 8am?",
         "How is traffic right now?",
         "Best time to drive on Friday?",
-        "When should I avoid Arago Street?",
+        "When should I avoid Aragó Street?",
         "Hay trafico el sabado por la tarde?",
         "¿Cómo está el tráfico ahora?",
         "¿Cuál es la mejor hora para conducir el viernes?",
@@ -78,13 +78,13 @@ with st.sidebar:
         st.caption(f"• {s}")
 
     st.divider()
-    st.caption("Group 3 · UPC · Phase 2")
+    st.caption("Group 3 · Universidad Europea de Madrid")
 
 # ---------------------------------------------------------------------------
 # Header
 # ---------------------------------------------------------------------------
 
-st.title("🚦 Arago Street Traffic Assistant")
+st.title("🚦 Aragó Street Traffic Assistant")
 st.caption("Barcelona, Spain · Ask in English or Spanish")
 
 # ---------------------------------------------------------------------------
@@ -119,7 +119,7 @@ for msg in st.session_state.messages:
 # Chat input
 # ---------------------------------------------------------------------------
 
-if prompt := st.chat_input("Ask about traffic on Arago Street..."):
+if prompt := st.chat_input("Ask about traffic on Aragó Street..."):
 
     # Show user message
     st.session_state.messages.append({"role": "user", "content": prompt})
